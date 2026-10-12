@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenTelemetry User Demo</title>
+  <style>
+    body {
+      font: 17px system-ui, sans-serif;
+      max-width: 720px;
+      margin: 64px auto;
+      padding: 0 24px;
+    }
+
+    input,
+    button {
+      font: inherit;
+      padding: 8px 12px;
+    }
+
+    input {
+      width: 100px;
+    }
+
+    pre {
+      background: #eef2f6;
+      padding: 20px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>OpenTelemetry User Demo</h1>
+  <p>Browser → App Service → Data Service → PostgreSQL</p>
+  <form id="form">
+    <label for="user-id">User ID</label>
+    <input id="user-id" type="text" min="1" max="2147483647" step="1" value="1" required>
+    <button id="submit" type="submit">Get User</button>
+  </form>
+  <pre id="result" aria-live="polite">Choose user 1 or 2 and click Get User.</pre>
+  <p>Compare trace IDs in both service consoles, then open
+    <a href="http://localhost:16686" target="_blank" rel="noopener">Jaeger</a>.
+  </p>
+  <script>
+    const form = document.getElementById('form');
+    const result = document.getElementById('result');
+    const button = document.getElementById('submit');
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      button.disabled = true;
+      result.textContent = 'Loading…';
+      try {
+        // No custom trace ID or traceparent: App Service starts the trace.
+        const id = document.getElementById('user-id').value;
+        const response = await fetch(`http://localhost:3001/api/users/${encodeURIComponent(id)}`);
+        const data = await response.json();
+        result.textContent = `HTTP ${response.status}\n${JSON.stringify(data, null, 2)}`;
+      } catch (error) {
+        result.textContent = `Request failed: ${error.message}. Check that both services are running.`;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+
+</html>
